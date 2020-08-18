@@ -89,15 +89,15 @@ def initialise():
 def split_main_image():
     print ("\nSTEP 1 -->    Splitting the Main image")
     if args.verbose: time.sleep(sdelay)
-    
+
     os.mkdir("main_image_blocks")   #create a new folder for storing the main image blocks
 
     img = cv2.imread('./main_image/img.jpg', 1) #load the colour image
-    if args.verbose: print ("\nMain image shape")
-    if args.verbose: print (" height   : ", img.shape[0])
-    if args.verbose: print (" width    : ", img.shape[1])
-    if args.verbose: time.sleep(sdelay)
-
+    if args.verbose:
+        print ("\nMain image shape")
+        print (" height   : ", img.shape[0])
+        print (" width    : ", img.shape[1])
+        time.sleep(sdelay)
     #after loading the main image, trim the extra rows/columns of main image for proper splitting so that
     #the image can be perfectly divided with the DIVIDER value provided, without getting any partial splits 
     extra_row = img.shape[0] % divider
@@ -109,19 +109,19 @@ def split_main_image():
     global biac
     biar = int(img.shape[1]/divider)     #biar : blocks in a row
     biac = int(img.shape[0]/divider)     #biac : blocks in a column
-    if args.verbose: print ("\nWhen the main image is splitted we get")
-    if args.verbose: print (" blocks in a row     : ", biar)
-    if args.verbose: print (" blocks in a column  : ", biac)
-    if args.verbose: print (" total blocks        : ", biar*biac)
-    if args.verbose: print (" NOTE : removed {} extra rows and {} extra columns".format(extra_row, extra_column))
-    if args.verbose: time.sleep(mdelay)
-
+    if args.verbose:
+        print ("\nWhen the main image is splitted we get")
+        print (" blocks in a row     : ", biar)
+        print (" blocks in a column  : ", biac)
+        print (" total blocks        : ", biar*biac)
+        print (" NOTE : removed {} extra rows and {} extra columns".format(extra_row, extra_column))
+        time.sleep(mdelay)
     #after trimming the image is split into (biar*biac) number of blocks
     count = 0
     xposition = 0
     yposition = 0
-    for i in range(0, biar):
-        for j in range(0, biac):
+    for i in range(biar):
+        for j in range(biac):
             temp_img = img[:][:]
             temp_img = temp_img[yposition:yposition+divider, xposition:xposition+divider]
             count += 1
@@ -136,15 +136,13 @@ def rename_filler_images():
     print ("\nSTEP 2 -->    Renaming the filler images")
     if args.verbose: time.sleep(sdelay)
     os.mkdir("renamed_filler_images")   #create a new folder for storing renamed filler images
-    
+
     # load the filler images to be renamed
     total_img_count = 0
-    count = 0
-    for infile in glob.glob("./filler_images/*.*"):
+    for _ in glob.glob("./filler_images/*.*"):
         total_img_count += 1
-    for infile in glob.glob("./filler_images/*.*"):
+    for count, infile in enumerate(glob.glob("./filler_images/*.*"), start=1):
         im = Image.open(infile)
-        count += 1
         im.save("./renamed_filler_images/" + str(count) + ".jpg", "JPEG")
         if args.verbose: print ("STEP 2 -->    ", count, "/", total_img_count, "images renamed")
     if args.verbose: time.sleep(sdelay)
@@ -182,7 +180,7 @@ def resize_filler_images():
     #load cropped filler images to be resized
     total_img_count = 0
     count = 0
-    for infile in glob.glob("./cropped_filler_images/*.jpg"):
+    for _ in glob.glob("./cropped_filler_images/*.jpg"):
         total_img_count += 1
     for infile in glob.glob("./cropped_filler_images/*.jpg"):
         file, ext = os.path.splitext(infile)
@@ -200,7 +198,7 @@ def avg_rgb_filler_images():
     total_img_count = 0
     count = 0
 
-    for infile in glob.glob("./resized_filler_images/*.jpg"):
+    for _ in glob.glob("./resized_filler_images/*.jpg"):
         total_img_count += 1
     for infile in glob.glob("./resized_filler_images/*.jpg"):
         filler_img = cv2.imread("resized_filler_images/" + str(count) + ".jpg", 1)
@@ -229,14 +227,12 @@ def avg_rgb_filler_images():
 def avg_rgb_main_image_blocks():
     print ("\nSTEP 6 -->    Finding the average RGB value of each main image block")
     if args.verbose: time.sleep(sdelay)
-    
-    total_img_count = 0
+
     count = 0
-    
-    for infile in glob.glob('./main_image_blocks/*.jpg'):
-        total_img_count += 1
-    for i in range(0, biar):
-        for j in range(0, biac):
+
+    total_img_count = sum(1 for _ in glob.glob('./main_image_blocks/*.jpg'))
+    for i in range(biar):
+        for j in range(biac):
             main_img_block = cv2.imread('./main_image_blocks/{}.jpg'.format(str(j)+'_'+str(i)), 1)
             sum_red = 0            
             sum_green = 0                      
@@ -267,13 +263,8 @@ def image_match():
     os.mkdir('matched_images')
     if args.verbose: time.sleep(sdelay)
 
-    total_img_count = 0
-    count = 0
-
-    for infile in glob.glob('./main_image_blocks/*.jpg'):
-        total_img_count += 1
-    for i in main_img_block_details:
-        count += 1
+    total_img_count = sum(1 for _ in glob.glob('./main_image_blocks/*.jpg'))
+    for count, i in enumerate(main_img_block_details, start=1):
         distance = 1000
         flag = 0
         for j in filler_img_details:
@@ -300,12 +291,10 @@ def image_stitch():
 
     row = []
     count = 0
-    total_img_count = 0
     temp_img = []
-    for i in glob.glob("./matched_images/*.jpg"):
-        total_img_count += 1
-    for i in range(0, biac):
-        for j in range(0, biar):
+    total_img_count = sum(1 for _ in glob.glob("./matched_images/*.jpg"))
+    for i in range(biac):
+        for j in range(biar):
             img = cv2.imread("./matched_images/{}.jpg".format(str(i)+'_'+str(j)), 1)
             row.append(img)
             count += 1
